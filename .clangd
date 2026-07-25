@@ -1,0 +1,20 @@
+CompileFlags:
+  CompilationDatabase: build
+  Remove:
+    - -mlongcalls
+    - -mdisable-hardware-atomics
+    - -fno-shrink-wrap
+    - -fstrict-volatile-bitfields
+    - -fno-tree-switch-conversion
+    - -fno-jump-tables
+    - -fno-builtin-memcpy
+    - -fno-builtin-memset
+    - -fno-builtin-bzero
+    - -Wno-error=*
+    - -Werror=all
+  Add:
+    - -Wno-unknown-warning-option
+    - -D__GLIBC_USE(x)=0
+
+If:
+  PathMatch: .*
