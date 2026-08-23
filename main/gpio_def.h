@@ -1,4 +1,8 @@
+#pragma once
+
 #include "driver/gpio.h"
+#include "hal/adc_types.h"
+
 /* 定义GPIO引脚 */
 
 // ADC - NTC 温度传感器 (10kΩ NTC, B=3950)
@@ -6,6 +10,11 @@
 #define COLD_ADC_GPIO  GPIO_NUM_5   /* COLD_ADC: TEC 冷端温度, 33kΩ 上拉 (温控反馈) */
 #define HOT_ADC_GPIO   GPIO_NUM_6   /* HOT_ADC:  TEC 热端温度, 3.3kΩ 上拉 (安全保护) */
 #define G_ADC_GPIO     GPIO_NUM_7   /* G_ADC:    TEC- 电压检测, 100kΩ/15kΩ/220kΩ 正偏置网络 */
+
+#define AIR_ADC_CHANNEL   ADC_CHANNEL_3
+#define COLD_ADC_CHANNEL  ADC_CHANNEL_4
+#define HOT_ADC_CHANNEL   ADC_CHANNEL_5
+#define G_ADC_CHANNEL     ADC_CHANNEL_6
 
 // LED
 #define LED_SAT_GPIO   GPIO_NUM_8   /* LED_SAT:  状态指示 LED (极性待上板确认)    */
