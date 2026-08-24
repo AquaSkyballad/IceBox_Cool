@@ -27,7 +27,7 @@ static const char *TAG = "display";
 #define DISPLAY_GAP_X          0
 #define DISPLAY_GAP_Y          0
 #define DISPLAY_INVERT_COLOR   false
-#define DISPLAY_COLOR_ORDER    LCD_RGB_ELEMENT_ORDER_RGB
+#define DISPLAY_COLOR_ORDER    LCD_RGB_ELEMENT_ORDER_BGR
 
 static esp_lcd_panel_io_handle_t s_io;
 static esp_lcd_panel_handle_t s_panel;
@@ -212,6 +212,11 @@ esp_lcd_panel_handle_t display_get_panel(void)
     return s_panel;
 }
 
+esp_lcd_panel_io_handle_t display_get_panel_io(void)
+{
+    return s_io;
+}
+
 esp_err_t display_set_backlight(uint8_t percent)
 {
     if (percent > DISPLAY_BACKLIGHT_MAX) {
@@ -222,7 +227,13 @@ esp_err_t display_set_backlight(uint8_t percent)
     }
     const uint32_t duty = ((uint32_t)percent * DISPLAY_BL_MAX_DUTY) /
                           DISPLAY_BACKLIGHT_MAX;
-    esp_err_t ret = ledc_set_duty_and_update(DISPLAY_BL_MODE, DISPLAY_BL_CHANNEL, duty, 0);
+    /* Backlight updates are serialized by the display owner. The thread-safe
+       combined API depends on the LEDC fade service in IDF 5.5, which is not
+       needed for an immediate duty change. */
+    esp_err_t ret = ledc_set_duty(DISPLAY_BL_MODE, DISPLAY_BL_CHANNEL, duty);
+    if (ret == ESP_OK) {
+        ret = ledc_update_duty(DISPLAY_BL_MODE, DISPLAY_BL_CHANNEL);
+    }
     if (ret == ESP_OK) {
         s_status.backlight_percent = percent;
         s_status.last_error = ESP_OK;

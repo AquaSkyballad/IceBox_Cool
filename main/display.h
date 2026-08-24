@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "esp_err.h"
+#include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_ops.h"
 
 #ifdef __cplusplus
@@ -25,6 +26,7 @@ typedef struct {
 esp_err_t display_init(void);
 esp_err_t display_deinit(void);
 esp_lcd_panel_handle_t display_get_panel(void);
+esp_lcd_panel_io_handle_t display_get_panel_io(void);
 esp_err_t display_set_backlight(uint8_t percent);
 esp_err_t display_sleep(void);
 esp_err_t display_wakeup(void);

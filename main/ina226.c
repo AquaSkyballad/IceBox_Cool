@@ -23,7 +23,12 @@ enum {
     INA226_REG_DIE_ID = 0xFF,
 };
 
-/* Configuration register fields. 588 us is conversion code 011 for both ADCs. */
+/* Configuration register fields. 588 us is conversion code 011 for both ADCs.
+   Bit 14 is marked reserved in the INA226 data sheet, but its POR/readback
+   value is 1 (the documented reset value is 0x4127). Keep that bit set when
+   composing a configuration word; otherwise a write/readback check can
+   report ESP_ERR_INVALID_RESPONSE even though the writable fields are valid. */
+#define INA226_CONFIG_RESERVED_BIT14     0x4000U
 #define INA226_CONFIG_AVERAGING_16       0x0400U
 #define INA226_CONFIG_BUS_CT_588US       0x00C0U
 #define INA226_CONFIG_SHUNT_CT_588US     0x0018U
@@ -232,7 +237,8 @@ static esp_err_t ina226_verify_identity(void)
 
 static esp_err_t ina226_apply_configuration(void)
 {
-    const uint16_t configuration = INA226_CONFIG_AVERAGING_16 |
+    const uint16_t configuration = INA226_CONFIG_RESERVED_BIT14 |
+                                   INA226_CONFIG_AVERAGING_16 |
                                    INA226_CONFIG_BUS_CT_588US |
                                    INA226_CONFIG_SHUNT_CT_588US |
                                    INA226_CONFIG_CONTINUOUS_SH_BUS;
@@ -261,14 +267,26 @@ static esp_err_t ina226_apply_configuration(void)
     uint16_t value = 0;
     ret = ina226_read_register(INA226_REG_CONFIGURATION, &value);
     if (ret != ESP_OK || value != configuration) {
+        if (ret == ESP_OK) {
+            ESP_LOGE(TAG, "configuration readback mismatch: wrote 0x%04x, read 0x%04x",
+                     configuration, value);
+        }
         return ret == ESP_OK ? ESP_ERR_INVALID_RESPONSE : ret;
     }
     ret = ina226_read_register(INA226_REG_CALIBRATION, &value);
     if (ret != ESP_OK || value != INA226_CALIBRATION_VALUE) {
+        if (ret == ESP_OK) {
+            ESP_LOGE(TAG, "calibration readback mismatch: wrote 0x%04x, read 0x%04x",
+                     INA226_CALIBRATION_VALUE, value);
+        }
         return ret == ESP_OK ? ESP_ERR_INVALID_RESPONSE : ret;
     }
     ret = ina226_read_register(INA226_REG_ALERT_LIMIT, &value);
     if (ret != ESP_OK || value != alert_limit) {
+        if (ret == ESP_OK) {
+            ESP_LOGE(TAG, "alert-limit readback mismatch: wrote 0x%04x, read 0x%04x",
+                     alert_limit, value);
+        }
         return ret == ESP_OK ? ESP_ERR_INVALID_RESPONSE : ret;
     }
     ret = ina226_read_register(INA226_REG_MASK_ENABLE, &value);
@@ -277,6 +295,8 @@ static esp_err_t ina226_apply_configuration(void)
     }
     ina226_capture_alert_bits(value);
     if ((value & INA226_MASK_CONFIGURATION_BITS) != mask_enable) {
+        ESP_LOGE(TAG, "mask/enable readback mismatch: wrote 0x%04x, read 0x%04x",
+                 mask_enable, value);
         return ESP_ERR_INVALID_RESPONSE;
     }
     return ESP_OK;
