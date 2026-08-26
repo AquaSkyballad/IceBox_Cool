@@ -35,6 +35,7 @@ typedef enum {
     ADC_DIAG_OK,
     ADC_DIAG_READ_FAILED,
     ADC_DIAG_CALIBRATION_FAILED,
+    ADC_DIAG_OPEN_CIRCUIT,
     ADC_DIAG_VOLTAGE_OUT_OF_RANGE,
     ADC_DIAG_MATH_INVALID,
     ADC_DIAG_PHYSICAL_VALUE_OUT_OF_RANGE,
@@ -74,6 +75,17 @@ static uint32_t adc_now_ms(void)
     return (uint32_t)(esp_timer_get_time() / 1000LL);
 }
 
+static adc_sensor_adc_reading_t adc_make_reading(
+    const adc_sensor_channel_diag_t *diagnostic)
+{
+    const adc_sensor_adc_reading_t reading = {
+        .average_raw = diagnostic->average_raw,
+        .voltage_mv = diagnostic->voltage_mv,
+        .valid = diagnostic->error == ADC_DIAG_OK,
+    };
+    return reading;
+}
+
 static void adc_reset_snapshot(void)
 {
     const adc_sensor_snapshot_t invalid_snapshot = {
@@ -100,6 +112,8 @@ static const char *adc_diag_error_name(adc_sensor_diag_error_t error)
         return "read failed";
     case ADC_DIAG_CALIBRATION_FAILED:
         return "calibration failed";
+    case ADC_DIAG_OPEN_CIRCUIT:
+        return "possible open circuit";
     case ADC_DIAG_VOLTAGE_OUT_OF_RANGE:
         return "voltage out of range";
     case ADC_DIAG_MATH_INVALID:
@@ -189,15 +203,18 @@ static esp_err_t adc_sample_channel(adc_sensor_channel_id_t channel_id,
 static esp_err_t adc_convert_ntc(const adc_sensor_channel_diag_t *diagnostic,
                                  float pullup_resistance_ohm,
                                  int valid_mv_min,
-                                 int valid_mv_max,
+                                 int open_circuit_mv_min,
                                  float valid_temp_min_c,
                                  float valid_temp_max_c,
                                  float *temperature_c,
                                  adc_sensor_diag_error_t *conversion_error)
 {
     const int voltage_mv = diagnostic->voltage_mv;
-    if (voltage_mv <= valid_mv_min || voltage_mv >= valid_mv_max ||
-        voltage_mv >= ADC_SENSOR_BOARD_SUPPLY_MV) {
+    if (voltage_mv >= open_circuit_mv_min) {
+        *conversion_error = ADC_DIAG_OPEN_CIRCUIT;
+        return ESP_ERR_INVALID_RESPONSE;
+    }
+    if (voltage_mv <= valid_mv_min || voltage_mv >= ADC_SENSOR_BOARD_SUPPLY_MV) {
         *conversion_error = ADC_DIAG_VOLTAGE_OUT_OF_RANGE;
         return ESP_ERR_INVALID_RESPONSE;
     }
@@ -386,6 +403,11 @@ esp_err_t adc_sensors_update(void)
         }
     }
 
+    next_snapshot.air_adc = adc_make_reading(&diagnostics[ADC_SENSOR_CHANNEL_AIR]);
+    next_snapshot.cold_adc = adc_make_reading(&diagnostics[ADC_SENSOR_CHANNEL_COLD]);
+    next_snapshot.hot_adc = adc_make_reading(&diagnostics[ADC_SENSOR_CHANNEL_HOT]);
+    next_snapshot.g_adc = adc_make_reading(&diagnostics[ADC_SENSOR_CHANNEL_TEC_N]);
+
     adc_sensor_diag_error_t conversion_error = ADC_DIAG_OK;
     if (diagnostics[ADC_SENSOR_CHANNEL_AIR].error == ADC_DIAG_OK) {
         esp_err_t ret = adc_convert_ntc(&diagnostics[ADC_SENSOR_CHANNEL_AIR],
@@ -398,9 +420,6 @@ esp_err_t adc_sensors_update(void)
                                         &conversion_error);
         diagnostics[ADC_SENSOR_CHANNEL_AIR].error = conversion_error;
         next_snapshot.air_valid = ret == ESP_OK;
-        if (ret != ESP_OK && first_error == ESP_OK) {
-            first_error = ret;
-        }
         if (ret != ESP_OK) {
             diagnostics[ADC_SENSOR_CHANNEL_AIR].driver_error = ret;
         }
@@ -417,9 +436,6 @@ esp_err_t adc_sensors_update(void)
                                         &conversion_error);
         diagnostics[ADC_SENSOR_CHANNEL_COLD].error = conversion_error;
         next_snapshot.cold_valid = ret == ESP_OK;
-        if (ret != ESP_OK && first_error == ESP_OK) {
-            first_error = ret;
-        }
         if (ret != ESP_OK) {
             diagnostics[ADC_SENSOR_CHANNEL_COLD].driver_error = ret;
         }
@@ -436,9 +452,6 @@ esp_err_t adc_sensors_update(void)
                                         &conversion_error);
         diagnostics[ADC_SENSOR_CHANNEL_HOT].error = conversion_error;
         next_snapshot.hot_valid = ret == ESP_OK;
-        if (ret != ESP_OK && first_error == ESP_OK) {
-            first_error = ret;
-        }
         if (ret != ESP_OK) {
             diagnostics[ADC_SENSOR_CHANNEL_HOT].driver_error = ret;
         }
@@ -450,9 +463,6 @@ esp_err_t adc_sensors_update(void)
                                           &conversion_error);
         diagnostics[ADC_SENSOR_CHANNEL_TEC_N].error = conversion_error;
         next_snapshot.tec_n_valid = ret == ESP_OK;
-        if (ret != ESP_OK && first_error == ESP_OK) {
-            first_error = ret;
-        }
         if (ret != ESP_OK) {
             diagnostics[ADC_SENSOR_CHANNEL_TEC_N].driver_error = ret;
         }
