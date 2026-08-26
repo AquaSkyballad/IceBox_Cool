@@ -291,6 +291,7 @@ esp_err_t tec_pwm_init(tec_pwm_alt_isr_callback_t alt_callback, void *user_ctx)
 
     const mcpwm_timer_config_t timer_config = {
         .group_id = TEC_PWM_MCPWM_GROUP_ID,
+        .intr_priority = TEC_PWM_MCPWM_INTR_PRIORITY,
         .clk_src = MCPWM_TIMER_CLK_SRC_DEFAULT,
         .resolution_hz = TEC_PWM_RESOLUTION_HZ,
         .period_ticks = TEC_PWM_PERIOD_TICKS,
@@ -300,7 +301,7 @@ esp_err_t tec_pwm_init(tec_pwm_alt_isr_callback_t alt_callback, void *user_ctx)
 
     const mcpwm_operator_config_t operator_config = {
         .group_id = TEC_PWM_MCPWM_GROUP_ID,
-        .intr_priority = 3,
+        .intr_priority = TEC_PWM_MCPWM_INTR_PRIORITY,
     };
     if (ret == ESP_OK) {
         ret = mcpwm_new_operator(&operator_config, &s_operator);
@@ -317,6 +318,7 @@ esp_err_t tec_pwm_init(tec_pwm_alt_isr_callback_t alt_callback, void *user_ctx)
     }
 
     const mcpwm_comparator_config_t comparator_config = {
+        .intr_priority = TEC_PWM_MCPWM_INTR_PRIORITY,
         .flags.update_cmp_on_tez = true,
     };
     if (ret == ESP_OK) {
@@ -359,7 +361,7 @@ esp_err_t tec_pwm_init(tec_pwm_alt_isr_callback_t alt_callback, void *user_ctx)
 
     const mcpwm_gpio_fault_config_t fault_config = {
         .group_id = TEC_PWM_MCPWM_GROUP_ID,
-        .intr_priority = 3,
+        .intr_priority = TEC_PWM_MCPWM_INTR_PRIORITY,
         .gpio_num = INA_ALT_GPIO,
         .flags.active_level = 0,
         .flags.pull_up = false,

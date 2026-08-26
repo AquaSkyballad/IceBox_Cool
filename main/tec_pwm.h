@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #define TEC_PWM_MCPWM_GROUP_ID       1
+#define TEC_PWM_MCPWM_INTR_PRIORITY  3
 #define TEC_PWM_FREQUENCY_HZ         100000U
 #define TEC_PWM_RESOLUTION_HZ        80000000U
 #define TEC_PWM_PERIOD_TICKS         800U
