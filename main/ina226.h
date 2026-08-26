@@ -40,7 +40,8 @@ esp_err_t ina226_init(int i2c_port);
 esp_err_t ina226_deinit(void);
 
 /* Read one completed conversion result and replace the cached snapshot.
-   Returns ESP_ERR_NOT_FINISHED when CVRF has not asserted yet. */
+   Returns ESP_ERR_NOT_FINISHED when CVRF has not asserted yet; in that case
+   the previous completed snapshot remains available unchanged. */
 esp_err_t ina226_update(void);
 esp_err_t ina226_get_snapshot(ina226_snapshot_t *snapshot);
 

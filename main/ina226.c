@@ -466,7 +466,15 @@ esp_err_t ina226_update(void)
     uint16_t current_raw = 0;
     ret = ina226_read_measurement_locked(&bus_raw, &current_raw, false);
     if (ret != ESP_OK) {
-        ina226_mark_snapshot_invalid(ret);
+        /* A conversion can legitimately be in progress when the caller polls
+           faster than the configured conversion period.  Keep the last
+           completed sample available; callers can use ESP_ERR_NOT_FINISHED to
+           distinguish it from a communication failure.  Invalidating the
+           cached sample here turns a harmless timing gap into a false safety
+           stop. */
+        if (ret != ESP_ERR_NOT_FINISHED) {
+            ina226_mark_snapshot_invalid(ret);
+        }
         ina226_unlock();
         return ret;
     }
