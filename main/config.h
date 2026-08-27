@@ -10,6 +10,9 @@
 #include <math.h>
 #include <stdint.h>
 
+#include "sdkconfig.h"
+#include "board_config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -55,24 +58,38 @@ extern "C" {
 #define ADC_TEC_N_VALID_VOLTAGE_V_MIN    -2
 #define ADC_TEC_N_VALID_VOLTAGE_V_MAX    22
 
-/* Safety policy. Keep these as project macros so they can be migrated to
- * Kconfig without changing the safety module's call sites. */
+/* Temperature-loop defaults exposed through Kconfig (x1000 -> float). */
+#define PID_KP_DEFAULT                   ((float)CONFIG_ICEBOX_CONTROL_TEMP_PID_KP_X1000 / 1000.0f)
+#define PID_KI_DEFAULT                   ((float)CONFIG_ICEBOX_CONTROL_TEMP_PID_KI_X1000 / 1000.0f)
+#define PID_KD_DEFAULT                   ((float)CONFIG_ICEBOX_CONTROL_TEMP_PID_KD_X1000 / 1000.0f)
+#define TARGET_TEMP_DEFAULT              CONFIG_ICEBOX_TARGET_TEMP_DEFAULT_C
+#define ICEBOX_TARGET_TEMP_MIN_C         (-10.0f)
+#define ICEBOX_TARGET_TEMP_MAX_C         (40.0f)
+
+/* TEC current boundaries. Keep the three levels distinct:
+ * - normal control must never request more than the software maximum;
+ * - the safety task trips on a measured value at or above the software
+ *   over-current trip point;
+ * - INA226 SOL/ALT remains the final hardware over-current limit. */
+#define TEC_CURRENT_SOFTWARE_MAX_A        5.5f
+#define TEC_CURRENT_SAFETY_TRIP_A         5.8f
+#define TEC_CURRENT_ALT_LIMIT_A           6.0f
+
+/* Safety policy. Fixed values stay in config.h; selected timing/temperature
+ * defaults below are supplied by Kconfig and adapted here. */
 #define SAFETY_DC_START_MIN_V                  11.0f
 #define SAFETY_DC_START_MAX_V                  22.0f
-#define SAFETY_DC_STABLE_TIME_MS               500U
+#define SAFETY_DC_STABLE_TIME_MS               CONFIG_ICEBOX_SAFETY_DC_STABLE_TIME_MS
 #define SAFETY_NO_DC_MAX_V                     1.0f
 #define SAFETY_HARD_OVERVOLTAGE_V              22.0f
-#define SAFETY_HARD_CURRENT_A                  5.5f
 #define SAFETY_STARTUP_MAX_CURRENT_A           0.10f
 #define SAFETY_STARTUP_PWM_OFF_FAULT_CURRENT_A 2.50f
 #define SAFETY_STARTUP_CHECK_TIMEOUT_MS        500U
-#define SAFETY_TEC_CONNECT_VALID_SAMPLES       3U
-#define SAFETY_TEC_CLOSED_MAX_DIFF_V           1.0f
-#define SAFETY_TEC_OPEN_MAX_ABS_V              1.0f
-#define SAFETY_HOT_START_MAX_TEMP_C            60.0f
+#define SAFETY_HOT_START_MAX_TEMP_C            ((float)CONFIG_ICEBOX_SAFETY_HOT_MAX_TEMP_C)
 #define SAFETY_FAN_STARTUP_MIN_PULSES          1U
 #define SAFETY_FAN_STARTUP_WINDOW_MS           500U
 #define SAFETY_FAN_RUNTIME_WINDOW_MS           500U
+#define SAFETY_RECOVERY_NORMAL_RUNTIME_MS      (30U * 60U * 1000U)
 #define SAFETY_INA_STALE_TIMEOUT_MS            120U
 #define SAFETY_INA_RECONFIGURE_ATTEMPTS        2U
 #define SAFETY_ADC_UPDATE_PERIOD_MS            20U

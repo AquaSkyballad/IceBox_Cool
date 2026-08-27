@@ -4,13 +4,14 @@
 #include <stdint.h>
 
 #include "esp_err.h"
+#include "config.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define THUMBWHEEL_DEBOUNCE_MS      30U
-#define THUMBWHEEL_LONG_PRESS_MS    1200U
+#define THUMBWHEEL_DEBOUNCE_MS      CONFIG_ICEBOX_INPUT_DEBOUNCE_MS
+#define THUMBWHEEL_LONG_PRESS_MS    CONFIG_ICEBOX_INPUT_LONG_PRESS_MS
 #define THUMBWHEEL_EVENT_QUEUE_LEN  10U
 
 typedef enum {

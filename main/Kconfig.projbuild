@@ -1,0 +1,117 @@
+# Kconfig配置文件
+# 用于menuconfig配置项
+
+menu "IceBox Configuration"
+
+    choice ICEBOX_MODE
+        prompt "Operating Mode"
+        default ICEBOX_MODE_BUSINESS
+        help
+            选择运行模式：硬件测试或正常业务
+
+        config HW_TEST_MODE
+            bool "Hardware Test Mode"
+            help
+                硬件测试模式,依次测试所有硬件模块
+
+        config ICEBOX_MODE_BUSINESS
+            bool "Normal Business Mode"
+            help
+                正常业务模式,运行温度控制和UI
+    endchoice
+
+    menu "Hardware Test Settings"
+        depends on HW_TEST_MODE
+
+        config HW_TEST_AUTO_CONFIRM
+            bool "Auto-confirm tests"
+            default n
+            help
+                自动确认非功率测试。TEC PWM功率测试始终要求KEY2持续按住2秒，
+                本选项不能绕过该安全确认。
+
+        config HW_TEST_SKIP_POWER
+            bool "Skip power-related tests (FAN/TEC)"
+            default n
+            help
+                跳过需要DC供电的测试项（风扇和TEC）
+    endmenu
+
+    menu "Control Defaults"
+        config ICEBOX_CONTROL_TEMP_PID_KP_X1000
+            int "Temperature PID Kp (x1000)"
+            default 2000
+            range 0 10000
+            help
+                温度环比例增益默认值，实际值 = 设置值 / 1000。
+
+        config ICEBOX_CONTROL_TEMP_PID_KI_X1000
+            int "Temperature PID Ki (x1000)"
+            default 500
+            range 0 10000
+            help
+                温度环积分增益默认值，实际值 = 设置值 / 1000。
+
+        config ICEBOX_CONTROL_TEMP_PID_KD_X1000
+            int "Temperature PID Kd (x1000)"
+            default 0
+            range 0 10000
+            help
+                温度环微分增益默认值，实际值 = 设置值 / 1000。文档首版默认关闭。
+
+        config ICEBOX_TARGET_TEMP_DEFAULT_C
+            int "Default Target Temperature (°C)"
+            default 5
+            range -10 40
+            help
+                默认目标温度
+    endmenu
+
+    menu "Safety Timing and Limits"
+
+        config ICEBOX_SAFETY_STATE_NVS
+            bool "Persist safety state to NVS"
+            default y
+            help
+                保存 NORMAL、RETRY_PENDING 和 LOCKED 安全状态。
+
+        config ICEBOX_FAULT_LOG_NVS
+            bool "Persist severe fault logs to NVS"
+            default n
+            help
+                启用后将严重故障现场记录保存到NVS。
+                关闭时仍保留RAM故障现场和安全状态持久化，不影响故障关断。
+
+        config ICEBOX_SAFETY_DC_STABLE_TIME_MS
+            int "DC Stable Time (ms)"
+            default 500
+            range 100 5000
+            help
+                DC 输入连续稳定后允许进入自检的确认时间。
+
+        config ICEBOX_SAFETY_HOT_MAX_TEMP_C
+            int "Hot-side Safety Maximum Temperature (°C)"
+            default 60
+            range 40 120
+            help
+                热端启动和运行期安全温度上限。
+    endmenu
+
+    menu "User Input"
+
+        config ICEBOX_INPUT_DEBOUNCE_MS
+            int "Thumbwheel Debounce Time (ms)"
+            default 30
+            range 5 200
+            help
+                三向拨轮按键消抖时间。
+
+        config ICEBOX_INPUT_LONG_PRESS_MS
+            int "Thumbwheel Long-press Time (ms)"
+            default 1200
+            range 200 5000
+            help
+                三向拨轮长按判定时间。
+    endmenu
+
+endmenu

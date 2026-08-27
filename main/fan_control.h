@@ -9,6 +9,11 @@
 extern "C" {
 #endif
 
+/* Product role: FAN1 is the controllable hot-side fan. FAN2 is the
+ * fixed-speed cold-side fan; its TACH remains available for safety checks and
+ * diagnostics, while the generic low-level setter APIs are retained for
+ * hardware test code. */
+
 #define FAN_PWM_FREQUENCY_HZ       23000U
 #define FAN_PWM_RESOLUTION_HZ      1000000U
 #define FAN_PWM_PERIOD_TICKS       ((FAN_PWM_RESOLUTION_HZ + FAN_PWM_FREQUENCY_HZ / 2U) / FAN_PWM_FREQUENCY_HZ)

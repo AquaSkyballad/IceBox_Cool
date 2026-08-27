@@ -7,6 +7,7 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 
+#include "config.h"
 #include "gpio_def.h"
 
 static const char *TAG = "ina226";
@@ -242,7 +243,7 @@ static esp_err_t ina226_apply_configuration(void)
                                    INA226_CONFIG_BUS_CT_588US |
                                    INA226_CONFIG_SHUNT_CT_588US |
                                    INA226_CONFIG_CONTINUOUS_SH_BUS;
-    const uint16_t alert_limit = (uint16_t)((INA226_ALT_CURRENT_A *
+    const uint16_t alert_limit = (uint16_t)((TEC_CURRENT_ALT_LIMIT_A *
                                              INA226_SHUNT_RESISTOR_OHM * 1000000.0f) /
                                             2.5f);
     const uint16_t mask_enable = INA226_MASK_SOL | INA226_MASK_ALERT_LATCH_ENABLE;
@@ -378,7 +379,8 @@ esp_err_t ina226_init(int i2c_port)
 
     ina226_publish_snapshot(bus_raw, current_raw);
     s_initialized = true;
-    ESP_LOGI(TAG, "initialized: 100 kHz, average=16, conversion=588 us, SOL=6 A");
+    ESP_LOGI(TAG, "initialized: 100 kHz, average=16, conversion=588 us, SOL=%.1f A",
+             TEC_CURRENT_ALT_LIMIT_A);
     ina226_unlock();
     return ESP_OK;
 }

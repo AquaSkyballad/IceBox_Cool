@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "board_config.h"
+
 #include "esp_err.h"
 
 #ifdef __cplusplus
@@ -15,10 +17,6 @@ extern "C" {
 #define TEC_PWM_RESOLUTION_HZ        80000000U
 #define TEC_PWM_PERIOD_TICKS         800U
 #define TEC_PWM_MAX_COMPARE_TICKS    (TEC_PWM_PERIOD_TICKS - 1U)
-#define TEC_PWM_UPDATE_PERIOD_MS     10U
-#define TEC_PWM_RAMP_STEP_PERCENT    1.0f
-#define TEC_PWM_ENABLE_PERCENT       6.0f
-#define TEC_PWM_DISABLE_PERCENT      4.0f
 
 typedef enum {
     TEC_PWM_STATE_UNINITIALIZED = 0,

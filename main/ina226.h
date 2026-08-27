@@ -16,7 +16,6 @@ extern "C" {
 #define INA226_SHUNT_RESISTOR_OHM   0.002f
 #define INA226_CURRENT_LSB_A        0.001f
 #define INA226_CALIBRATION_VALUE    0x0A00U
-#define INA226_ALT_CURRENT_A        6.0f
 
 typedef struct {
     float bus_voltage_v;
